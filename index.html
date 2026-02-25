@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>EXT eFootball Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 100%);
+      color: #e0e0e0;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .glow-text { color: #00d4ff; text-shadow: 0 0 10px rgba(0, 212, 255, 0.5); font-weight: 700; }
+    .card-neon { background: rgba(26, 26, 46, 0.8); border: 1px solid rgba(0, 212, 255, 0.2); box-shadow: 0 0 30px rgba(0, 212, 255, 0.1); }
+    .btn-glow { background: linear-gradient(135deg, #00d4ff 0%, #b700ff 100%); -webkit-tap-highlight-color: transparent; font-weight: 600; }
+    .btn-glow:active { transform: scale(0.95); }
+    #main-container { width: 100%; height: calc(100vh - 80px); overflow-y: auto; overflow-x: hidden; padding-bottom: 20px; }
+    .view-content { display: none; padding: 16px; }
+    .view-content.active { display: block; }
+    #bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background: linear-gradient(to top, rgba(10, 10, 18, 0.95), rgba(10, 10, 18, 0.8)); border-top: 1px solid rgba(0, 212, 255, 0.2); display: flex; justify-content: space-around; z-index: 100; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px; flex: 1; color: #666; font-size: 12px; -webkit-tap-highlight-color: transparent; transition: color 0.2s; }
+    .nav-item.active { color: #00d4ff; }
+    .nav-item > div:first-child { font-size: 28px; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    input, select, textarea { -webkit-user-select: text; user-select: text; background-color: #0a0a12 !important; color: white !important; }
+    input::placeholder { color: #888 !important; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; }
+    .modal-overlay.active { display: flex; }
+    .modal-content { background: linear-gradient(135deg, #1a1a2e 0%, #0f0f18 100%); border: 1px solid rgba(0, 212, 255, 0.3); }
+    .image-preview { width: 80px; height: 80px; border-radius: 8px; background: rgba(0,212,255,0.1); display: flex; align-items: center; justify-content: center; border: 2px dashed rgba(0,212,255,0.3); }
+  </style>
+</head>
+<body>
+
+<!-- MAIN CONTAINER -->
+<div id="main-container" class="scrollbar-hide">
+
+  <!-- HOME VIEW -->
+  <div id="home-view" class="view-content active">
+    <div class="flex flex-col items-center gap-2 mb-6">
+      <div class="h-auto w-80">
+        <image src="/assets/brand.png" />
+      </div>
+      <h1 class="text-3xl font-bold glow-text mb-1">EXT eFootball Manager</h1>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mb-6">
+      <div class="card-neon p-4 rounded-xl">
+        <div class="text-2xl mb-2">🏆</div>
+        <p class="text-gray-400 text-xs mb-1">Competições</p>
+        <p class="text-xl font-bold glow-text" id="stat-competitions">0</p>
+      </div>
+      <div class="card-neon p-4 rounded-xl">
+        <div class="text-2xl mb-2">⚽</div>
+        <p class="text-gray-400 text-xs mb-1">Partidas</p>
+        <p class="text-xl font-bold glow-text" id="stat-matches">0</p>
+      </div>
+      <div class="card-neon p-4 rounded-xl">
+        <div class="text-2xl mb-2">👥</div>
+        <p class="text-gray-400 text-xs mb-1">Jogadores</p>
+        <p class="text-xl font-bold glow-text" id="stat-players">0</p>
+      </div>
+      <div class="card-neon p-4 rounded-xl">
+        <div class="text-2xl mb-2">🎯</div>
+        <p class="text-gray-400 text-xs mb-1">Times</p>
+        <p class="text-xl font-bold glow-text" id="stat-teams">0</p>
+      </div>
+    </div>
+
+    <button onclick="openCreateCompetitionModal()" class="w-full btn-glow text-white py-4 px-4 rounded-xl text-lg mb-3">
+      ➕ Nova Competição
+    </button>
+  </div>
+
+  <!-- COMPETITIONS VIEW -->
+  <div id="competitions-view" class="view-content">
+    <h2 class="text-2xl font-bold glow-text mb-4">Competições</h2>
+    <div id="competitions-list" class="space-y-3">
+      <!-- Dinâmico -->
+    </div>
+  </div>
+
+  <!-- TEAMS VIEW -->
+  <div id="teams-view" class="view-content">
+    <div class="flex gap-2 mb-4">
+      <h2 class="text-2xl font-bold glow-text flex-1">Times</h2>
+      <button onclick="openTeamsFilterModal()" class="bg-neon-blue bg-opacity-20 text-neon-blue px-3 py-1 rounded-lg text-sm font-semibold">
+        🔍
+      </button>
+    </div>
+    <div id="teams-list" class="space-y-3">
+      <!-- Dinâmico -->
+    </div>
+  </div>
+
+  <!-- STATISTICS VIEW -->
+  <div id="statistics-view" class="view-content">
+    <h2 class="text-2xl font-bold glow-text mb-4">Estatísticas</h2>
+    <select id="stats-competition" onchange="updateStats()" class="w-full rounded-lg px-3 py-2 text-sm mb-4 text-white">
+      <option value="">Selecione uma competição</option>
+    </select>
+    <div class="space-y-6">
+      <div>
+        <h3 class="font-bold glow-text mb-3">🔥 Artilheiros</h3>
+        <div id="top-scorers" class="space-y-2">
+          <p class="text-gray-400 text-sm">Selecione uma competição</p>
+        </div>
+      </div>
+      <div>
+        <h3 class="font-bold glow-text mb-3">✨ Assistentes</h3>
+        <div id="top-assists" class="space-y-2">
+          <p class="text-gray-400 text-sm">Selecione uma competição</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAVIGATION -->
+<div id="bottom-nav">
+  <button onclick="navTo('home')" class="nav-item active" data-view="home">
+    <div>🏠</div>
+    <span>Home</span>
+  </button>
+  <button onclick="navTo('competitions')" class="nav-item" data-view="competitions">
+    <div>🏆</div>
+    <span>Competições</span>
+  </button>
+  <button onclick="navTo('teams')" class="nav-item" data-view="teams">
+    <div>🎯</div>
+    <span>Times</span>
+  </button>
+  <button onclick="navTo('statistics')" class="nav-item" data-view="statistics">
+    <div>📊</div>
+    <span>Stats</span>
+  </button>
+  <button onclick="openMenu()" class="nav-item" data-view="menu">
+    <div>⚙️</div>
+    <span>Menu</span>
+  </button>
+</div>
+
+<!-- MODAL: CRIAR COMPETIÇÃO -->
+<div id="create-competition-modal" class="modal-overlay" onclick="if(event.target === this) closeModal('create-competition-modal')">
+  <div class="modal-content w-full rounded-t-3xl p-6 max-h-96 overflow-y-auto">
+    <h3 class="text-xl font-bold glow-text mb-4">Nova Competição</h3>
+    
+    <div class="space-y-3 mb-4">
+      <input type="text" id="comp-name" placeholder="Nome" class="w-full rounded-lg px-3 py-3 text-sm">
+      <input type="text" id="comp-country" placeholder="País" class="w-full rounded-lg px-3 py-3 text-sm">
+      <input type="text" id="comp-season" placeholder="Temporada (2024)" class="w-full rounded-lg px-3 py-3 text-sm">
+      
+      <select id="comp-type" onchange="updateCompetitionFormat()" class="w-full rounded-lg px-3 py-3 text-sm">
+        <option value="">Tipo</option>
+        <option value="Liga">Liga</option>
+        <option value="Copa">Copa</option>
+      </select>
+
+      <div id="format-div" class="hidden">
+        <select id="comp-format" class="w-full rounded-lg px-3 py-3 text-sm">
+          <option value="Único">Turno Único</option>
+          <option value="Turno/Returno">Turno e Returno</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <input type="number" id="comp-pts-win" value="3" class="rounded-lg px-2 py-3 text-sm" placeholder="V">
+        <input type="number" id="comp-pts-draw" value="1" class="rounded-lg px-2 py-3 text-sm" placeholder="E">
+        <input type="number" id="comp-pts-loss" value="0" class="rounded-lg px-2 py-3 text-sm" placeholder="D">
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <button onclick="createCompetition()" class="flex-1 btn-glow text-white py-3 px-4 rounded-lg text-sm">
+        Criar
+      </button>
+      <button onclick="closeModal('create-competition-modal')" class="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-semibold">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SELECIONAR PARTICIPANTES -->
+<div id="select-participants-modal" class="modal-overlay" onclick="if(event.target === this) closeModal('select-participants-modal')">
+  <div class="modal-content w-full rounded-t-3xl p-6 max-h-96 flex flex-col">
+    <h3 class="text-xl font-bold glow-text mb-3">Selecionar Participantes</h3>
+    <input type="text" id="participants-search" placeholder="Buscar..." onkeyup="filterParticipantsModal()" class="w-full rounded-lg px-3 py-2 text-sm mb-3">
+    
+    <div id="participants-grid" class="grid grid-cols-2 gap-2 overflow-y-auto flex-1 mb-4">
+      <!-- Dinâmico -->
+    </div>
+
+    <div class="flex gap-2">
+      <button onclick="confirmParticipants()" class="flex-1 btn-glow text-white py-3 px-4 rounded-lg text-sm font-semibold">
+        Confirmar
+      </button>
+      <button onclick="closeModal('select-participants-modal')" class="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-semibold">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: VER PARTIDAS -->
+<div id="view-matches-modal" class="modal-overlay" onclick="if(event.target === this) closeModal('view-matches-modal')">
+  <div class="modal-content w-full rounded-t-3xl p-6 max-h-96 flex flex-col">
+    <h3 class="text-xl font-bold glow-text mb-3">Partidas</h3>
+    
+    <div id="matches-container" class="space-y-2 overflow-y-auto flex-1 mb-4">
+      <!-- Dinâmico -->
+    </div>
+
+    <button onclick="closeModal('view-matches-modal')" class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-semibold">
+      Fechar
+    </button>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR PARTIDA -->
+<div id="edit-match-modal" class="modal-overlay" onclick="if(event.target === this) closeModal('edit-match-modal')">
+  <div class="modal-content w-full rounded-t-3xl p-6 max-h-full flex flex-col">
+    <h3 class="text-xl font-bold glow-text mb-4">Editar Partida</h3>
+    
+    <div id="match-detail" class="overflow-y-auto flex-1 mb-4">
+      <!-- Dinâmico -->
+    </div>
+
+    <button onclick="closeModal('edit-match-modal')" class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-semibold">
+      Fechar
+    </button>
+  </div>
+</div>
+
+<!-- MODAL: VER TABELA -->
+<div id="view-standings-modal" class="modal-overlay" onclick="if(event.target === this) closeModal('view-standings-modal')">
+  <div class="modal-content w-full rounded-t-3xl p-6 max-h-96 flex flex-col">
+    <h3 class="text-xl font-bold glow-text mb-3">Classificação</h3>
+    
+    <div id="standings-table-container" class="overflow-x-auto flex-1 mb-4 text-xs">
+      <!-- Dinâmico -->
+    </div>
+
+    <button onclick="closeModal('view-standings-modal')" class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-semibold">
+      Fechar
+    </button>
+  </div>
+</div>
+
+<!-- MODAL: FILTRO TEAMS -->
+<div id="teams-filter-modal" class="modal-overlay" onclick="if(event.target === this) closeModal('teams-filter-modal')">
+  <div class="modal-content w-full rounded-t-3xl p-6 max-h-96 flex flex-col">
+    <h3 class="text-xl font-bold glow-text mb-3">Filtrar Times</h3>
+    <input type="text" id="teams-search" placeholder="Buscar..." onkeyup="applyTeamsFilter()" class="w-full rounded-lg px-3 py-2 text-sm mb-3">
+    
+    <div class="space-y-2 overflow-y-auto flex-1 mb-4">
+      <button onclick="filterTeamsByRegion('all')" class="w-full text-left px-4 py-2 rounded-lg bg-neon-blue bg-opacity-20 text-neon-blue font-semibold text-sm">
+        Todos os Times
+      </button>
+
+      <p class="text-xs text-gray-400 px-4 mt-3 mb-1">🏆 AMÉRICA DO SUL - CLUBES</p>
+      <button onclick="filterTeamsByLeague('Brasileirão A')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Brasileirão Betano</button>
+      <button onclick="filterTeamsByLeague('Brasileirão B')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Série B Brasil</button>
+      <button onclick="filterTeamsByLeague('Liga Argentina')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Liga Argentina</button>
+      <button onclick="filterTeamsByLeague('Liga Chilena')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Chilean League</button>
+      <button onclick="filterTeamsByLeague('Liga Colombiana')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Colombian League</button>
+
+      <p class="text-xs text-gray-400 px-4 mt-3 mb-1">🏆 AMÉRICA DO SUL - SELEÇÕES</p>
+      <button onclick="filterTeamsByLeague('Seleções-BRASIL')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Brasil 🇧🇷</button>
+      <button onclick="filterTeamsByLeague('Seleções-ARG')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Argentina 🇦🇷</button>
+      <button onclick="filterTeamsByLeague('Seleções-OUTROS-SA')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Outros América do Sul</button>
+
+      <p class="text-xs text-gray-400 px-4 mt-3 mb-1">🌎 AMÉRICA DO NORTE</p>
+      <button onclick="filterTeamsByLeague('MLS')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">MLS (EUA)</button>
+      <button onclick="filterTeamsByLeague('USL')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">USL Championship</button>
+      <button onclick="filterTeamsByLeague('Seleções-NA')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Seleções N. América</button>
+
+      <p class="text-xs text-gray-400 px-4 mt-3 mb-1">🌍 EUROPA - CLUBES</p>
+      <button onclick="filterTeamsByLeague('Premier League')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Premier League</button>
+      <button onclick="filterTeamsByLeague('EFL Championship')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">EFL Championship</button>
+      <button onclick="filterTeamsByLeague('La Liga')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">La Liga Espanha</button>
+      <button onclick="filterTeamsByLeague('Segunda Division')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Segunda División</button>
+      <button onclick="filterTeamsByLeague('Serie A')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Serie A Itália</button>
+      <button onclick="filterTeamsByLeague('Serie B')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Serie B Itália</button>
+      <button onclick="filterTeamsByLeague('Ligue 1')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Ligue 1 França</button>
+      <button onclick="filterTeamsByLeague('Ligue 2')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Ligue 2 França</button>
+      <button onclick="filterTeamsByLeague('Bundesliga')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Bundesliga Alemanha</button>
+      <button onclick="filterTeamsByLeague('Liga Portugal')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Liga Portugal</button>
+      <button onclick="filterTeamsByLeague('Süper Lig')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Trendyol Süper Lig</button>
+      <button onclick="filterTeamsByLeague('Eredivisie')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Eredivisie Holanda</button>
+      <button onclick="filterTeamsByLeague('Jupiler Pro')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Jupiler Pro League</button>
+      <button onclick="filterTeamsByLeague('Superliga')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">3F Superliga</button>
+      <button onclick="filterTeamsByLeague('Scottish Premiership')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Scottish Premiership</button>
+      <button onclick="filterTeamsByLeague('Super League')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Swiss Super League</button>
+
+      <p class="text-xs text-gray-400 px-4 mt-3 mb-1">🌍 EUROPA - SELEÇÕES</p>
+      <button onclick="filterTeamsByLeague('Seleções-EUR')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Seleções Europa</button>
+
+      <p class="text-xs text-gray-400 px-4 mt-3 mb-1">🌏 ÁSIA - CLUBES</p>
+      <button onclick="filterTeamsByLeague('K League')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Korean League</button>
+      <button onclick="filterTeamsByLeague('J1 League')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">J1 VISION LEAGUE</button>
+      <button onclick="filterTeamsByLeague('J2/J3')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">J2/J3 VISION LEAGUE</button>
+
+      <p class="text-xs text-gray-400 px-4 mt-3 mb-1">🌏 ÁSIA - SELEÇÕES</p>
+      <button onclick="filterTeamsByLeague('Seleções-ASIA')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Seleções Ásia</button>
+
+      <p class="text-xs text-gray-400 px-4 mt-3 mb-1">🌐 África</p>
+      <button onclick="filterTeamsByLeague('Seleções-AFRICA')" class="w-full text-left px-4 py-2 rounded-lg hover:bg-dark-card text-sm">Seleções África</button>
+    </div>
+
+    <button onclick="closeModal('teams-filter-modal')" class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-semibold">
+      Fechar
+    </button>
+  </div>
+</div>
+
+<!-- MODAL: MENU -->
+<div id="menu-modal" class="modal-overlay" onclick="if(event.target === this) closeModal('menu-modal')">
+  <div class="modal-content w-full rounded-t-3xl p-6">
+    <h3 class="text-xl font-bold glow-text mb-4">Menu</h3>
+    
+    <div class="space-y-2 mb-6">
+      <button onclick="openCreateTeamModal()" class="w-full bg-green-600 bg-opacity-30 hover:bg-opacity-50 text-green-400 py-3 px-4 rounded-lg text-left text-sm font-semibold">
+        ➕ Criar Novo Time
+      </button>
+      <button onclick="exportData()" class="w-full bg-blue-600 bg-opacity-30 hover:bg-opacity-50 text-blue-400 py-3 px-4 rounded-lg text-left text-sm font-semibold">
+        💾 Exportar Dados
+      </button>
+      <button onclick="importData()" class="w-full bg-purple-600 bg-opacity-30 hover:bg-opacity-50 text-purple-400 py-3 px-4 rounded-lg text-left text-sm font-semibold">
+        📥 Importar Dados
+      </button>
+      <button onclick="clearAllData()" class="w-full bg-red-600 bg-opacity-30 hover:bg-opacity-50 text-red-400 py-3 px-4 rounded-lg text-left text-sm font-semibold">
+        🗑️ Limpar Tudo
+      </button>
+    </div>
+
+    <button onclick="closeModal('menu-modal')" class="w-full bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-semibold">
+      Fechar
+    </button>
+
+    <div class="flex flex-col items-center mt-4">
+      <div class="h-auto w-80">
+        <image src="/assets/logo.png" />
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CRIAR TIME -->
+<div id="create-team-modal" class="modal-overlay" onclick="if(event.target === this) closeModal('create-team-modal')">
+  <div class="modal-content w-full rounded-t-3xl p-6 max-h-full flex flex-col">
+    <h3 class="text-xl font-bold glow-text mb-4">Criar Novo Time</h3>
+    
+    <div class="space-y-3 overflow-y-auto flex-1 mb-4">
+      <input type="text" id="team-name" placeholder="Nome do Time" class="w-full rounded-lg px-3 py-3 text-sm">
+      <input type="text" id="team-country" placeholder="País" class="w-full rounded-lg px-3 py-3 text-sm">
+      
+      <select id="team-league" class="w-full rounded-lg px-3 py-3 text-sm">
+        <option value="">Selecione a Liga</option>
+        <optgroup label="🏆 AMÉRICA DO SUL - CLUBES">
+          <option value="Brasileirão A">Brasileirão Betano</option>
+          <option value="Brasileirão B">Série B Brasil</option>
+          <option value="Liga Argentina">Liga Argentina</option>
+          <option value="Liga Chilena">Chilean League</option>
+          <option value="Liga Colombiana">Colombian League</option>
+        </optgroup>
+        <optgroup label="🏆 AMÉRICA DO SUL - SELEÇÕES">
+          <option value="Seleções-BRASIL">Brasil</option>
+          <option value="Seleções-ARG">Argentina</option>
+          <option value="Seleções-OUTROS-SA">Outros América do Sul</option>
+        </optgroup>
+        <optgroup label="🌎 AMÉRICA DO NORTE">
+          <option value="MLS">MLS (EUA)</option>
+          <option value="USL">USL Championship</option>
+          <option value="Seleções-NA">Seleções N. América</option>
+        </optgroup>
+        <optgroup label="🌍 EUROPA - CLUBES">
+          <option value="Premier League">Premier League</option>
+          <option value="EFL Championship">EFL Championship</option>
+          <option value="La Liga">La Liga Espanha</option>
+          <option value="Segunda Division">Segunda División</option>
+          <option value="Serie A">Serie A Itália</option>
+          <option value="Serie B">Serie B Itália</option>
+          <option value="Ligue 1">Ligue 1 França</option>
+          <option value="Ligue 2">Ligue 2 França</option>
+          <option value="Bundesliga">Bundesliga Alemanha</option>
+          <option value="Liga Portugal">Liga Portugal</option>
+          <option value="Süper Lig">Trendyol Süper Lig</option>
+          <option value="Eredivisie">Eredivisie Holanda</option>
+          <option value="Jupiler Pro">Jupiler Pro League</option>
+          <option value="Superliga">3F Superliga</option>
+          <option value="Scottish Premiership">Scottish Premiership</option>
+          <option value="Super League">Swiss Super League</option>
+        </optgroup>
+        <optgroup label="🌍 EUROPA - SELEÇÕES">
+          <option value="Seleções-EUR">Seleções Europa</option>
+        </optgroup>
+        <optgroup label="🌏 ÁSIA - CLUBES">
+          <option value="K League">Korean League</option>
+          <option value="J1 League">J1 VISION LEAGUE</option>
+          <option value="J2/J3">J2/J3 VISION LEAGUE</option>
+        </optgroup>
+        <optgroup label="🌏 ÁSIA - SELEÇÕES">
+          <option value="Seleções-ASIA">Seleções Ásia</option>
+        </optgroup>
+        <optgroup label="🌐 ÁFRICA">
+          <option value="Seleções-AFRICA">Seleções África</option>
+        </optgroup>
+      </select>
+
+      <div class="border border-gray-600 rounded-lg p-3">
+        <p class="text-xs text-gray-400 mb-2">Imagem do Time (PNG/JPG)</p>
+        <input type="file" id="team-image" accept="image/*" onchange="previewTeamImage()" class="w-full text-xs">
+        <div id="image-preview-container" class="mt-3 flex justify-center">
+          <div class="image-preview">
+            <span class="text-gray-500">Sem imagem</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex gap-2">
+      <button onclick="createTeam()" class="flex-1 btn-glow text-white py-3 px-4 rounded-lg text-sm font-semibold">
+        Criar
+      </button>
+      <button onclick="closeModal('create-team-modal')" class="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg text-sm font-semibold">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentCompetitionId = null;
+let selectedTeamsForParticipants = new Set();
+let currentTeamImageBase64 = null;
+
+// ============================================================
+// STORAGE MODULE
+// ============================================================
+const StorageModule = {
+  init() {
+    if (!this.getData()) {
+      this.setData({
+        teams: [],
+        competitions: [],
+        matches: [],
+        players: [],
+        standings: []
+      });
+    }
+  },
+
+  getData() {
+    return JSON.parse(localStorage.getItem('ext_efootball_data')) || null;
+  },
+
+  setData(data) {
+    localStorage.setItem('ext_efootball_data', JSON.stringify(data));
+  }
+};
+
+// ============================================================
+// COMPETITION MODULE
+// ============================================================
+const CompetitionModule = {
+  create(name, country, season, type, format, pointsWin, pointsDraw, pointsLoss, tiebreakers) {
+    const data = StorageModule.getData();
+    if (!name || name.length < 3) return { error: 'Nome inválido' };
+    if (data.competitions.find(c => c.name === name)) return { error: 'Competição já existe' };
+    
+    const competition = {
+      id: this.generateId(),
+      name, country, season, type,
+      format: type === 'Liga' ? format : null,
+      status: 'Criando',
+      pointsWin: parseInt(pointsWin),
+      pointsDraw: parseInt(pointsDraw),
+      pointsLoss: parseInt(pointsLoss),
+      tiebreakers,
+      participants: [],
+      createdAt: new Date().toISOString(),
+      matchGenerated: false
+    };
+    
+    data.competitions.push(competition);
+    StorageModule.setData(data);
+    return { success: true, competition };
+  },
+
+  addParticipants(competitionId, teamIds) {
+    const data = StorageModule.getData();
+    const competition = data.competitions.find(c => c.id === competitionId);
+    if (!competition) return { error: 'Competição não encontrada' };
+    
+    competition.participants = teamIds.map(teamId => ({ teamId, position: 0, addedAt: new Date().toISOString() }));
+    
+    MatchModule.generateMatches(competitionId, competition.type, competition.format);
+    competition.status = 'Em Andamento';
+    competition.matchGenerated = true;
+    
+    StorageModule.setData(data);
+    return { success: true, competition };
+  },
+
+  getAll() { return StorageModule.getData().competitions; },
+  getById(id) { return this.getAll().find(c => c.id === id); },
+  delete(id) {
+    const data = StorageModule.getData();
+    data.competitions = data.competitions.filter(c => c.id !== id);
+    data.matches = data.matches.filter(m => m.competitionId !== id);
+    data.standings = data.standings.filter(s => s.competitionId !== id);
+    StorageModule.setData(data);
+  },
+  generateId() { return 'comp_' + Math.random().toString(36).substr(2, 9); }
+};
+
+// ============================================================
+// MATCH MODULE
+// ============================================================
+const MatchModule = {
+  generateMatches(competitionId, type, format) {
+    const data = StorageModule.getData();
+    const competition = data.competitions.find(c => c.id === competitionId);
+    if (!competition) return;
+
+    const teamIds = competition.participants.map(p => p.teamId);
+    const matches = [];
+
+    if (type === 'Liga') {
+      const rounds = format === 'Turno/Returno' ? 2 : 1;
+      for (let r = 0; r < rounds; r++) {
+        for (let i = 0; i < teamIds.length; i++) {
+          for (let j = i + 1; j < teamIds.length; j++) {
+            if (r === 0) {
+              matches.push(this.createMatch(competitionId, teamIds[i], teamIds[j], i + j + 1));
+            } else {
+              matches.push(this.createMatch(competitionId, teamIds[j], teamIds[i], teamIds.length + i + j + 1));
+            }
+          }
+        }
+      }
+    } else if (type === 'Copa') {
+      if (![4, 8, 16, 32].includes(teamIds.length)) return { error: 'Copa deve ter 4, 8, 16 ou 32 times' };
+      let round = 'Oitavas';
+      if (teamIds.length < 16) round = 'Quartas';
+      for (let i = 0; i < teamIds.length; i += 2) {
+        matches.push(this.createMatch(competitionId, teamIds[i], teamIds[i + 1], 1, round));
+      }
+    }
+
+    data.matches.push(...matches);
+    StorageModule.setData(data);
+  },
+
+  createMatch(competitionId, homeTeamId, awayTeamId, round, roundName = null) {
+    return {
+      id: 'match_' + Math.random().toString(36).substr(2, 9),
+      competitionId, round: roundName || round, homeTeamId, awayTeamId,
+      homeScore: null, awayScore: null, status: 'Agendada',
+      events: [], createdAt: new Date().toISOString(), finishedAt: null
+    };
+  },
+
+  addGoal(matchId, teamId, playerName, assistantName, minute) {
+    const data = StorageModule.getData();
+    const match = data.matches.find(m => m.id === matchId);
+    if (!match) return { error: 'Partida não encontrada' };
+    if (match.status === 'Finalizada') return { error: 'Partida já finalizada' };
+    if (minute < 1 || minute > 120) return { error: 'Minuto inválido' };
+
+    let player = data.players.find(p => p.name === playerName && p.teamId === teamId);
+    if (!player) {
+      player = {
+        id: 'player_' + Math.random().toString(36).substr(2, 9),
+        name: playerName, teamId, number: null,
+        stats: { goals: 0, assists: 0, matchesPlayed: 1, lastMatchDate: new Date().toISOString() },
+        createdAt: new Date().toISOString()
+      };
+      data.players.push(player);
+    } else {
+      player.stats.goals++;
+    }
+
+    let assistantId = null;
+    if (assistantName) {
+      let assistant = data.players.find(p => p.name === assistantName && p.teamId === teamId);
+      if (!assistant) {
+        assistant = {
+          id: 'player_' + Math.random().toString(36).substr(2, 9),
+          name: assistantName, teamId, number: null,
+          stats: { goals: 0, assists: 1, matchesPlayed: 1, lastMatchDate: new Date().toISOString() },
+          createdAt: new Date().toISOString()
+        };
+        data.players.push(assistant);
+      } else {
+        assistant.stats.assists++;
+      }
+      assistantId = assistant.id;
+    }
+
+    const goal = {
+      id: 'event_' + Math.random().toString(36).substr(2, 9),
+      type: 'goal', minute, playerId: player.id, playerName,
+      assistantId, assistantName: assistantName || null,
+      teamId, timestamp: new Date().toISOString()
+    };
+
+    match.events.push(goal);
+    match.status = 'Em Andamento';
+
+    if (teamId === match.homeTeamId) {
+      match.homeScore = (match.homeScore || 0) + 1;
+    } else {
+      match.awayScore = (match.awayScore || 0) + 1;
+    }
+
+    StorageModule.setData(data);
+    return { success: true, match, player };
+  },
+
+  finishMatch(matchId) {
+    const data = StorageModule.getData();
+    const match = data.matches.find(m => m.id === matchId);
+    if (!match) return { error: 'Partida não encontrada' };
+
+    match.status = 'Finalizada';
+    match.finishedAt = new Date().toISOString();
+
+    StandingsModule.updateStandings(match.competitionId);
+    StorageModule.setData(data);
+    return { success: true, match };
+  },
+
+  getByCompetition(competitionId) { return StorageModule.getData().matches.filter(m => m.competitionId === competitionId); },
+  getById(id) { return StorageModule.getData().matches.find(m => m.id === id); }
+};
+
+// ============================================================
+// STANDINGS MODULE
+// ============================================================
+const StandingsModule = {
+  updateStandings(competitionId) {
+    const data = StorageModule.getData();
+    const competition = data.competitions.find(c => c.id === competitionId);
+    if (!competition) return;
+
+    data.standings = data.standings.filter(s => s.competitionId !== competitionId);
+
+    const matches = data.matches.filter(m => m.competitionId === competitionId && m.status === 'Finalizada');
+    const stats = {};
+
+    competition.participants.forEach(p => {
+      stats[p.teamId] = {
+        teamId: p.teamId, competitionId, points: 0, matchesPlayed: 0,
+        wins: 0, draws: 0, losses: 0, goalsFor: 0, goalsAgainst: 0
+      };
+    });
+
+    matches.forEach(match => {
+      const home = stats[match.homeTeamId];
+      const away = stats[match.awayTeamId];
+
+      home.matchesPlayed++;
+      away.matchesPlayed++;
+      home.goalsFor += match.homeScore;
+      home.goalsAgainst += match.awayScore;
+      away.goalsFor += match.awayScore;
+      away.goalsAgainst += match.homeScore;
+
+      if (match.homeScore > match.awayScore) {
+        home.wins++;
+        home.points += competition.pointsWin;
+        away.losses++;
+        away.points += competition.pointsLoss;
+      } else if (match.homeScore < match.awayScore) {
+        away.wins++;
+        away.points += competition.pointsWin;
+        home.losses++;
+        home.points += competition.pointsLoss;
+      } else {
+        home.draws++;
+        away.draws++;
+        home.points += competition.pointsDraw;
+        away.points += competition.pointsDraw;
+      }
+    });
+
+    let standings = Object.values(stats).map(s => ({
+      ...s,
+      goalDifference: s.goalsFor - s.goalsAgainst
+    }));
+
+    standings = standings.sort((a, b) => b.points - a.points || b.goalDifference - a.goalDifference);
+    standings = standings.map((s, i) => ({ ...s, position: i + 1 }));
+
+    data.standings.push(...standings);
+    StorageModule.setData(data);
+  },
+
+  getByCompetition(competitionId) { return StorageModule.getData().standings.filter(s => s.competitionId === competitionId); }
+};
+
+// ============================================================
+// UI CONTROLLER
+// ============================================================
+const UIController = {
+  init() {
+    StorageModule.init();
+    this.renderHome();
+    this.updateStatsDropdown();
+  },
+
+  renderHome() {
+    const data = StorageModule.getData();
+    document.getElementById('stat-competitions').textContent = data.competitions.length;
+    document.getElementById('stat-matches').textContent = data.matches.length;
+    document.getElementById('stat-players').textContent = data.players.length;
+    document.getElementById('stat-teams').textContent = data.teams.length;
+  },
+
+  renderCompetitions() {
+    const competitions = CompetitionModule.getAll();
+    const container = document.getElementById('competitions-list');
+    
+    if (competitions.length === 0) {
+      container.innerHTML = '<p class="text-center text-gray-400 py-8">Nenhuma competição</p>';
+      return;
+    }
+
+    container.innerHTML = competitions.map(comp => `
+      <div class="card-neon rounded-xl p-4">
+        <h4 class="font-bold glow-text mb-2">${comp.name}</h4>
+        <div class="text-xs text-gray-400 space-y-1 mb-3">
+          <p>${comp.country} | ${comp.season}</p>
+          <p>${comp.type === 'Liga' ? '⚽ Liga' : '🏆 Copa'} • ${comp.status}</p>
+          <p>👥 ${comp.participants.length} times</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="openCompetitionDetail('${comp.id}')" class="bg-neon-blue bg-opacity-20 text-neon-blue py-2 rounded-lg text-xs font-semibold">
+            👁️ Ver
+          </button>
+          <button onclick="deleteCompetition('${comp.id}')" class="bg-red-600 bg-opacity-20 text-red-400 py-2 rounded-lg text-xs font-semibold">
+            🗑️ Deletar
+          </button>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  renderTeams() {
+    const data = StorageModule.getData();
+    this.displayTeams(data.teams);
+  },
+
+  displayTeams(teams) {
+    const container = document.getElementById('teams-list');
+    container.innerHTML = teams.map(team => `
+      <div class="card-neon rounded-xl p-3">
+        <div class="flex items-center gap-3">
+          ${team.image ? `<img src="${team.image}" class="w-12 h-12 rounded-lg">` : `<div class="w-12 h-12 rounded-lg bg-neon-blue bg-opacity-20 flex items-center justify-center text-xl">⚽</div>`}
+          <div class="flex-1">
+            <h4 class="font-bold text-sm">${team.name}</h4>
+            <p class="text-xs text-gray-400">${team.league}</p>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  },
+
+  updateStatsDropdown() {
+    const competitions = CompetitionModule.getAll();
+    const select = document.getElementById('stats-competition');
+    
+    select.innerHTML = '<option value="">Selecione uma competição</option>' + 
+      competitions.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  }
+};
+
+// ============================================================
+// UI FUNCTIONS
+// ============================================================
+
+function navTo(view) {
+  document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+  document.getElementById(view + '-view').classList.add('active');
+  
+  document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+  document.querySelector(`[data-view="${view}"]`).classList.add('active');
+
+  if (view === 'home') UIController.renderHome();
+  else if (view === 'competitions') UIController.renderCompetitions();
+  else if (view === 'teams') UIController.renderTeams();
+  else if (view === 'statistics') UIController.updateStatsDropdown();
+}
+
+function openMenu() {
+  document.getElementById('menu-modal').classList.add('active');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function openCreateCompetitionModal() {
+  document.getElementById('create-competition-modal').classList.add('active');
+}
+
+function updateCompetitionFormat() {
+  const type = document.getElementById('comp-type').value;
+  document.getElementById('format-div').classList.toggle('hidden', type !== 'Liga');
+}
+
+function createCompetition() {
+  const name = document.getElementById('comp-name').value;
+  const country = document.getElementById('comp-country').value;
+  const season = document.getElementById('comp-season').value;
+  const type = document.getElementById('comp-type').value;
+  const format = document.getElementById('comp-format')?.value || 'Único';
+  const pointsWin = document.getElementById('comp-pts-win').value;
+  const pointsDraw = document.getElementById('comp-pts-draw').value;
+  const pointsLoss = document.getElementById('comp-pts-loss').value;
+
+  if (!name || !country || !season || !type) {
+    alert('Preencha todos os campos');
+    return;
+  }
+
+  const result = CompetitionModule.create(name, country, season, type, format, pointsWin, pointsDraw, pointsLoss, [{ field: 'points', order: 'desc' }]);
+  
+  if (result.error) {
+    alert(result.error);
+    return;
+  }
+
+  currentCompetitionId = result.competition.id;
+  closeModal('create-competition-modal');
+  document.getElementById('comp-name').value = '';
+  document.getElementById('comp-country').value = '';
+  document.getElementById('comp-season').value = '';
+  document.getElementById('comp-type').value = '';
+  
+  openParticipantsModal();
+}
+
+function openParticipantsModal() {
+  selectedTeamsForParticipants.clear();
+  const data = StorageModule.getData();
+  const grid = document.getElementById('participants-grid');
+  
+  grid.innerHTML = data.teams.map(team => `
+    <label class="flex items-center gap-2 p-3 card-neon rounded-lg cursor-pointer">
+      <input type="checkbox" data-team-id="${team.id}" onchange="toggleTeamSelection('${team.id}')">
+      <span class="text-xs">${team.image ? `<img src="${team.image}" class="w-6 h-6 rounded">` : '⚽'} ${team.name}</span>
+    </label>
+  `).join('');
+
+  document.getElementById('select-participants-modal').classList.add('active');
+}
+
+function toggleTeamSelection(teamId) {
+  if (selectedTeamsForParticipants.has(teamId)) {
+    selectedTeamsForParticipants.delete(teamId);
+  } else {
+    selectedTeamsForParticipants.add(teamId);
+  }
+}
+
+function filterParticipantsModal() {
+  const search = document.getElementById('participants-search').value.toLowerCase();
+  const data = StorageModule.getData();
+  const grid = document.getElementById('participants-grid');
+  
+  const filtered = data.teams.filter(t => t.name.toLowerCase().includes(search));
+  grid.innerHTML = filtered.map(team => `
+    <label class="flex items-center gap-2 p-3 card-neon rounded-lg cursor-pointer">
+      <input type="checkbox" data-team-id="${team.id}" onchange="toggleTeamSelection('${team.id}')" ${selectedTeamsForParticipants.has(team.id) ? 'checked' : ''}>
+      <span class="text-xs">${team.image ? `<img src="${team.image}" class="w-6 h-6 rounded">` : '⚽'} ${team.name}</span>
+    </label>
+  `).join('');
+}
+
+function confirmParticipants() {
+  if (selectedTeamsForParticipants.size < 2) {
+    alert('Selecione pelo menos 2 times');
+    return;
+  }
+
+  const result = CompetitionModule.addParticipants(currentCompetitionId, Array.from(selectedTeamsForParticipants));
+  
+  if (result.error) {
+    alert(result.error);
+    return;
+  }
+
+  closeModal('select-participants-modal');
+  navTo('competitions');
+  alert('✅ Competição criada!');
+}
+
+function openCompetitionDetail(competitionId) {
+  currentCompetitionId = competitionId;
+  const choice = prompt('1 - Partidas\n2 - Tabela\n3 - Cancelar');
+
+  if (choice === '1') showMatches(competitionId);
+  else if (choice === '2') showStandings(competitionId);
+}
+
+function showMatches(competitionId) {
+  const matches = MatchModule.getByCompetition(competitionId);
+  const data = StorageModule.getData();
+  const container = document.getElementById('matches-container');
+
+  container.innerHTML = matches.map(match => {
+    const homeTeam = data.teams.find(t => t.id === match.homeTeamId);
+    const awayTeam = data.teams.find(t => t.id === match.awayTeamId);
+    
+    return `
+      <div class="card-neon p-3 rounded-lg flex gap-3 items-center">
+        <div class="flex-1 text-center text-sm">
+          <p class="font-semibold text-xs">${homeTeam?.name || 'Time'}</p>
+        </div>
+        <div class="text-center">
+          <p class="text-lg font-bold glow-text">${match.homeScore !== null ? match.homeScore : '-'}x${match.awayScore !== null ? match.awayScore : '-'}</p>
+          <p class="text-xs text-gray-400">${match.status}</p>
+        </div>
+        <div class="flex-1 text-center text-sm">
+          <p class="font-semibold text-xs">${awayTeam?.name || 'Time'}</p>
+        </div>
+        <button onclick="editMatch('${match.id}')" class="bg-neon-blue bg-opacity-20 text-neon-blue px-2 py-1 rounded text-xs font-semibold">✏️</button>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('view-matches-modal').classList.add('active');
+}
+
+function editMatch(matchId) {
+  const match = MatchModule.getById(matchId);
+  const data = StorageModule.getData();
+  const homeTeam = data.teams.find(t => t.id === match.homeTeamId);
+  const awayTeam = data.teams.find(t => t.id === match.awayTeamId);
+
+  const container = document.getElementById('match-detail');
+  container.innerHTML = `
+    <div class="space-y-3">
+      <h4 class="font-bold text-sm">${homeTeam?.name} vs ${awayTeam?.name}</h4>
+      <p class="text-xs text-gray-400">Status: ${match.status}</p>
+      
+      <div class="max-h-32 overflow-y-auto">
+        <p class="text-xs font-semibold mb-2">Gols (${match.events.length}):</p>
+        ${match.events.length === 0 ? '<p class="text-xs text-gray-400">Sem gols</p>' : match.events.map(event => `
+          <p class="text-xs">${event.minute}' - <span class="glow-text">${event.playerName}</span></p>
+        `).join('')}
+      </div>
+
+      ${match.status !== 'Finalizada' ? `
+        <div class="space-y-2 pt-3 border-t border-gray-700">
+          <input type="text" id="player-name" placeholder="Jogador" class="w-full rounded-lg px-2 py-2 text-xs">
+          <input type="text" id="assist-name" placeholder="Assistente (opt)" class="w-full rounded-lg px-2 py-2 text-xs">
+          <div class="grid grid-cols-2 gap-2">
+            <input type="number" id="goal-minute" min="1" max="120" value="45" class="rounded-lg px-2 py-2 text-xs">
+            <select id="goal-team" class="rounded-lg px-2 py-2 text-xs">
+              <option value="${match.homeTeamId}">${homeTeam?.name}</option>
+              <option value="${match.awayTeamId}">${awayTeam?.name}</option>
+            </select>
+          </div>
+          <button onclick="addGoalToMatch('${matchId}')" class="w-full btn-glow text-white py-2 rounded-lg text-xs font-semibold">⚽ Gol</button>
+          <button onclick="finishMatchAction('${matchId}')" class="w-full bg-green-600 text-white py-2 rounded-lg text-xs font-semibold">✅ Finalizar</button>
+        </div>
+      ` : '<p class="text-center text-neon-blue text-xs pt-3">Finalizada</p>'}
+    </div>
+  `;
+
+  document.getElementById('edit-match-modal').classList.add('active');
+}
+
+function addGoalToMatch(matchId) {
+  const playerName = document.getElementById('player-name').value;
+  const assistName = document.getElementById('assist-name').value;
+  const minute = parseInt(document.getElementById('goal-minute').value);
+  const teamId = document.getElementById('goal-team').value;
+
+  if (!playerName) {
+    alert('Informe o jogador');
+    return;
+  }
+
+  const result = MatchModule.addGoal(matchId, teamId, playerName, assistName || null, minute);
+  
+  if (result.error) {
+    alert(result.error);
+    return;
+  }
+
+  document.getElementById('player-name').value = '';
+  document.getElementById('assist-name').value = '';
+  document.getElementById('goal-minute').value = '45';
+
+  editMatch(matchId);
+}
+
+function finishMatchAction(matchId) {
+  if (!confirm('Finalizar partida?')) return;
+
+  const result = MatchModule.finishMatch(matchId);
+  
+  if (result.error) {
+    alert(result.error);
+    return;
+  }
+
+  closeModal('edit-match-modal');
+  closeModal('view-matches-modal');
+  alert('✅ Partida finalizada!');
+}
+
+function showStandings(competitionId) {
+  const standings = StandingsModule.getByCompetition(competitionId);
+  const data = StorageModule.getData();
+  
+  if (standings.length === 0) {
+    alert('Nenhuma partida finalizada');
+    return;
+  }
+
+  const table = `
+    <table class="w-full text-xs">
+      <thead>
+        <tr class="border-b border-gray-700">
+          <th class="p-1">Pos</th><th class="p-1">Time</th><th class="p-1">J</th><th class="p-1">V</th><th class="p-1">E</th><th class="p-1">D</th><th class="p-1">SG</th><th class="p-1">Pts</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${standings.map(s => {
+          const team = data.teams.find(t => t.id === s.teamId);
+          return `
+            <tr class="border-b border-gray-700">
+              <td class="p-1 glow-text font-bold">${s.position}</td>
+              <td class="p-1 text-xs">${team?.name || 'Time'}</td>
+              <td class="p-1 text-center">${s.matchesPlayed}</td>
+              <td class="p-1 text-center">${s.wins}</td>
+              <td class="p-1 text-center">${s.draws}</td>
+              <td class="p-1 text-center">${s.losses}</td>
+              <td class="p-1 text-center">${s.goalDifference >= 0 ? '+' : ''}${s.goalDifference}</td>
+              <td class="p-1 text-center glow-text font-bold">${s.points}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  document.getElementById('standings-table-container').innerHTML = table;
+  document.getElementById('view-standings-modal').classList.add('active');
+}
+
+function deleteCompetition(competitionId) {
+  if (!confirm('Deletar competição?')) return;
+  CompetitionModule.delete(competitionId);
+  UIController.renderCompetitions();
+}
+
+function openTeamsFilterModal() {
+  document.getElementById('teams-filter-modal').classList.add('active');
+}
+
+function filterTeamsByLeague(league) {
+  const data = StorageModule.getData();
+  const filtered = data.teams.filter(t => t.league === league);
+  UIController.displayTeams(filtered);
+  closeModal('teams-filter-modal');
+}
+
+function filterTeamsByRegion(region) {
+  const data = StorageModule.getData();
+  UIController.displayTeams(data.teams);
+  closeModal('teams-filter-modal');
+}
+
+function applyTeamsFilter() {
+  const search = document.getElementById('teams-search').value.toLowerCase();
+  const data = StorageModule.getData();
+  const filtered = data.teams.filter(t => t.name.toLowerCase().includes(search) || t.league.toLowerCase().includes(search));
+  UIController.displayTeams(filtered);
+}
+
+function openCreateTeamModal() {
+  closeModal('menu-modal');
+  currentTeamImageBase64 = null;
+  document.getElementById('team-name').value = '';
+  document.getElementById('team-country').value = '';
+  document.getElementById('team-league').value = '';
+  document.getElementById('team-image').value = '';
+  document.getElementById('image-preview-container').innerHTML = '<div class="image-preview"><span class="text-gray-500">Sem imagem</span></div>';
+  document.getElementById('create-team-modal').classList.add('active');
+}
+
+function previewTeamImage() {
+  const file = document.getElementById('team-image').files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    currentTeamImageBase64 = e.target.result;
+    const img = document.createElement('img');
+    img.src = currentTeamImageBase64;
+    img.style.width = '80px';
+    img.style.height = '80px';
+    img.style.borderRadius = '8px';
+    
+    document.getElementById('image-preview-container').innerHTML = '';
+    document.getElementById('image-preview-container').appendChild(img);
+  };
+  reader.readAsDataURL(file);
+}
+
+function createTeam() {
+  const name = document.getElementById('team-name').value;
+  const country = document.getElementById('team-country').value;
+  const league = document.getElementById('team-league').value;
+
+  if (!name || !country || !league) {
+    alert('Preencha todos os campos');
+    return;
+  }
+
+  const data = StorageModule.getData();
+  const newTeam = {
+    id: 'team_' + Math.random().toString(36).substr(2, 9),
+    name, country, league,
+    image: currentTeamImageBase64 || null
+  };
+
+  data.teams.push(newTeam);
+  StorageModule.setData(data);
+
+  closeModal('create-team-modal');
+  alert('✅ Time criado!');
+  UIController.renderTeams();
+  UIController.renderHome();
+}
+
+function updateStats() {
+  const competitionId = document.getElementById('stats-competition').value;
+  const data = StorageModule.getData();
+
+  if (!competitionId) {
+    document.getElementById('top-scorers').innerHTML = '<p class="text-gray-400 text-sm">Selecione uma competição</p>';
+    document.getElementById('top-assists').innerHTML = '<p class="text-gray-400 text-sm">Selecione uma competição</p>';
+    return;
+  }
+
+  const competition = CompetitionModule.getById(competitionId);
+  const participantTeamIds = competition.participants.map(p => p.teamId);
+
+  const scorers = data.players
+    .filter(p => participantTeamIds.includes(p.teamId) && p.stats.goals > 0)
+    .sort((a, b) => b.stats.goals - a.stats.goals)
+    .slice(0, 10);
+
+  document.getElementById('top-scorers').innerHTML = scorers.length === 0 
+    ? '<p class="text-gray-400 text-sm">Sem gols ainda</p>'
+    : scorers.map((p, i) => {
+      const team = data.teams.find(t => t.id === p.teamId);
+      return `<div class="flex justify-between p-2 bg-dark-bg rounded text-sm"><div><p class="font-semibold">${i+1}. ${p.name}</p><p class="text-xs text-gray-400">${team?.name}</p></div><p class="glow-text font-bold">${p.stats.goals}</p></div>`;
+    }).join('');
+
+  const assists = data.players
+    .filter(p => participantTeamIds.includes(p.teamId) && p.stats.assists > 0)
+    .sort((a, b) => b.stats.assists - a.stats.assists)
+    .slice(0, 10);
+
+  document.getElementById('top-assists').innerHTML = assists.length === 0
+    ? '<p class="text-gray-400 text-sm">Sem assistências ainda</p>'
+    : assists.map((p, i) => {
+      const team = data.teams.find(t => t.id === p.teamId);
+      return `<div class="flex justify-between p-2 bg-dark-bg rounded text-sm"><div><p class="font-semibold">${i+1}. ${p.name}</p><p class="text-xs text-gray-400">${team?.name}</p></div><p class="text-neon-purple font-bold">${p.stats.assists}</p></div>`;
+    }).join('');
+}
+
+function exportData() {
+  const data = StorageModule.getData();
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'efootball-backup.json';
+  a.click();
+  alert('✅ Exportado!');
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        StorageModule.setData(data);
+        alert('✅ Importado!');
+        location.reload();
+      } catch (err) {
+        alert('Erro ao importar');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function clearAllData() {
+  if (!confirm('Deletar TODOS os dados?')) return;
+  localStorage.clear();
+  location.reload();
+}
+
+// ============================================================
+// INICIALIZAR
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  UIController.init();
+});
+</script>
+
+</body>
+</html>
